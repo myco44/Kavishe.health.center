@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kavishe Health Center v5. 5 PRO</title>
+    <!-- Tailwind CSS kwa muundo thabiti wa kisasa -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome kwa alama za picha za hospitali -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts ya Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #060913;
+            color: #f3f4f6;
+        }
+        .glass-card {
+            background: rgba(13, 20, 38, 0.7);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .neon-border-reception { border-color: #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.15); }
+        .neon-border-nurse { border-color: #14b8a6; box-shadow: 0 0 15px rgba(20, 184, 166, 0.15); }
+        .neon-border-doctor { border-color: #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.15); }
+        .neon-border-advisor { border-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.15); }
+        
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #060913;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+        .pulse-emergency {
+            animation: pulse-red 1.6s infinite;
+        }
+        @keyframes pulse-red {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+            70% { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- TOP BAR YA USIMAMIZI WA JUU -->
+    <nav class="border-b border-gray-800 bg-slate-950/90 sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-700 flex items-center justify-center text-white text-2xl shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-house-medical"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                        KAVISHE HEALTH CENTER <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 font-bold border border-cyan-500/20">V3.5 PRO</span>
+                    </h1>
+                    <p class="text-xs text-gray-400">Hospitali Kuu ya Kidijitali ya <strong class="text-white">Myco</strong></p>
+                </div>
+            </div>
+
+            <!-- DHARURA NA WEKA API -->
+            <div class="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
+                <!-- Kitufe cha dharura -->
+                <button onclick="triggerEmergency()" class="pulse-emergency bg-red-600 hover:bg-red-700 text-white text-xs font-black px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-truck-medical animate-bounce"></i> DHARURA 🚨
+                </button>
+                
+                <!-- Kiboksi cha API Key -->
+                <div class="glass-card px-3 py-1.5 rounded-xl flex items-center gap-1.5 border border-slate-800">
+                    <i class="fa-solid fa-key text-yellow-500 text-xs"></i>
+                    <input type="password" id="apiKeyInput" placeholder="Gemini API Key..." class="bg-transparent border-none text-xs text-gray-200 focus:outline-none focus:ring-0 w-32 md:w-44" onchange="saveApiKey()">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 mt-6">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- UPANDE WA KUSHOTO: VYUMBA VYA MATIBABU YA AI (Col: 8) -->
+            <div class="lg:col-span-8 space-y-6">
+
+                <!-- 1. MAPOKEZI: CHUMBA CHA MERY P. MACHA -->
+                <div id="room_reception" class="room-container glass-card rounded-2xl p-6 shadow-2xl relative overflow-hidden transition-all duration-300 border-t-4 border-purple-500">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-800 pb-4 mb-4">
+                        <div class="flex items-center gap-3">
+                            <!-- Avatar Mery yenye uwezo wa kupakiwa picha -->
+                            <div class="w-16 h-16 rounded-full border-2 border-purple-500 flex items-center justify-center bg-purple-950/40 text-purple-400 text-3xl relative overflow-hidden group">
+                                <img id="avatar_img_reception" src="https://placehold.co/150x150/581c87/ffffff?text=Mery" class="w-full h-full object-cover hidden">
+                                <i id="avatar_icon_reception" class="fa-solid fa-user-tie"></i>
+                                <!-- Kitufe cha kupakia picha -->
+                                <label class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition">
+                                    <i class="fa-solid fa-camera text-xs text-white"></i>
+                                    <input type="file" accept="image/*" class="hidden" onchange="uploadStaffAvatar('reception', event)">
+                                </label>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white flex items-center gap-1.5">
+                                    Mery P. Macha <span class="text-[10px] px-2 py-0.5 rounded bg-purple-950 text-purple-300 font-bold">Mapokezi</span>
+                                </h3>
+                                <p class="text-xs text-purple-400">Usajili na Ufunguaji wa Kadi ya Mgonjwa</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-500 font-bold">HATUA 1 KATI YA 4</span>
+                    </div>
+
+                    <!-- Chat Box ya Mery -->
+                    <div id="chat_reception" class="h-64 overflow-y-auto mb-4 p-3 bg-slate-950/50 rounded-xl space-y-4">
+                        <div class="flex gap-2.5 text-xs sm:text-sm">
+                            <div class="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">M</div>
+                            <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl border border-purple-500/10 text-gray-200">
+                                Jambo! Naitwa <strong>Mery P. Macha</strong>, karibu sana <strong>Kavishe Health Center</strong>. 
+                                Tafadhali nisaidie <strong>Jina lako kamili, Umri, na Jinsia</strong> ili nikufungulie Faili la kadi ya mgonjwa kwa ajili ya vipimo.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fomu ya haraka ya Usajili -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 bg-slate-950/60 p-3 rounded-xl border border-gray-800">
+                        <input type="text" id="p_name" placeholder="Jina Kamili" class="bg-slate-900 text-xs p-2.5 rounded-lg border border-gray-850 text-white focus:border-purple-500 focus:outline-none">
+                        <input type="number" id="p_age" placeholder="Umri" class="bg-slate-900 text-xs p-2.5 rounded-lg border border-gray-850 text-white focus:border-purple-500 focus:outline-none">
+                        <select id="p_gender" class="bg-slate-900 text-xs p-2.5 rounded-lg border border-gray-850 text-gray-400 focus:border-purple-500 focus:outline-none">
+                            <option value="">Jinsia</option>
+                            <option value="Mume">Mume</option>
+                            <option value="Mke">Mke</option>
+                        </select>
+                        <button onclick="registerPatient()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-2.5 rounded-lg transition">
+                            <i class="fa-solid fa-id-card-clip mr-1"></i> Fungua Kadi
+                        </button>
+                    </div>
+
+                    <!-- Input ya meseji kwa Mery -->
+                    <div class="flex gap-2">
+                        <input type="text" id="query_reception" placeholder="Andika ujumbe kwa Mery..." class="flex-1 bg-slate-900/80 text-sm p-3 rounded-xl border border-gray-800 focus:border-purple-500 focus:outline-none text-white" onkeydown="handleEnter(event, 'reception')">
+                        <button onclick="askAgent('reception')" class="w-12 h-12 rounded-xl bg-purple-600 text-white flex items-center justify-center hover:scale-105 transition">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+
+                    <div id="nav_to_nurse" class="hidden mt-4 text-center">
+                        <button onclick="advanceStage('nurse')" class="bg-gradient-to-r from-teal-500 to-emerald-600 hover:opacity-90 text-slate-950 font-extrabold text-xs px-6 py-3 rounded-xl transition inline-flex items-center gap-2 shadow-lg shadow-teal-500/20">
+                            Nenda kwa Nesi Millen <i class="fa-solid fa-arrow-right animate-pulse"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. NESI: CHUMBA CHA NESI MILLEN M. KAVISHE -->
+                <div id="room_nurse" class="room-container hidden glass-card rounded-2xl p-6 shadow-2xl relative overflow-hidden transition-all duration-300 border-t-4 border-teal-500">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-800 pb-4 mb-4">
+                        <div class="flex items-center gap-3">
+                            <!-- Avatar Millen yenye uwezo wa kupakiwa picha -->
+                            <div class="w-16 h-16 rounded-full border-2 border-teal-500 flex items-center justify-center bg-teal-950/40 text-teal-400 text-3xl relative overflow-hidden group">
+                                <img id="avatar_img_nurse" src="https://placehold.co/150x150/115e59/ffffff?text=Millen" class="w-full h-full object-cover hidden">
+                                <i id="avatar_icon_nurse" class="fa-solid fa-user-nurse"></i>
+                                <label class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition">
+                                    <i class="fa-solid fa-camera text-xs text-white"></i>
+                                    <input type="file" accept="image/*" class="hidden" onchange="uploadStaffAvatar('nurse', event)">
+                                </label>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white flex items-center gap-1.5">
+                                    Nesi Millen M. Kavishe <span class="text-[10px] px-2 py-0.5 rounded bg-teal-950 text-teal-300 font-bold">Nesi</span>
+                                </h3>
+                                <p class="text-xs text-teal-400">Vipimo vya Awali vya Afya (Vital Signs)</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-500 font-bold">HATUA 2 KATI YA 4</span>
+                    </div>
+
+                    <!-- Chat Box ya Millen -->
+                    <div id="chat_nurse" class="h-48 overflow-y-auto mb-4 p-3 bg-slate-950/50 rounded-xl space-y-4">
+                        <div class="flex gap-2.5 text-xs sm:text-sm">
+                            <div class="w-8 h-8 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center shrink-0">N</div>
+                            <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl border border-teal-500/10 text-gray-200">
+                                Karibu sebuleni kwangu, naitwa <strong>Nesi Millen M. Kavishe</strong>. 
+                                Nitaingiza vipimo vyako vya sasa vya uzito, urefu, presha na sukari ili niweke ripoti yako sawa kabla hujaingia kwa daktari wetu.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fomu ya Vitals -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 bg-slate-950/60 p-4 rounded-xl border border-gray-800">
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1">Uzito (Kg)</label>
+                            <input type="number" id="p_weight" placeholder="Mfano: 68" class="w-full bg-slate-900 text-xs p-2 rounded-lg border border-gray-800 text-white focus:border-teal-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1">Urefu (cm)</label>
+                            <input type="number" id="p_height" placeholder="Mfano: 165" class="w-full bg-slate-900 text-xs p-2 rounded-lg border border-gray-800 text-white focus:border-teal-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1">Presha (BP)</label>
+                            <input type="text" id="p_bp" placeholder="Mfano: 120/80" class="w-full bg-slate-900 text-xs p-2 rounded-lg border border-gray-800 text-white focus:border-teal-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1">Sukari (mg/dL)</label>
+                            <input type="number" id="p_sugar" placeholder="Mfano: 92" class="w-full bg-slate-900 text-xs p-2 rounded-lg border border-gray-800 text-white focus:border-teal-500 focus:outline-none">
+                        </div>
+                        <div class="col-span-2 sm:col-span-4">
+                            <button onclick="calculateVitals()" class="w-full bg-teal-600 hover:bg-teal-700 text-slate-950 font-black text-xs py-2.5 rounded-lg transition shadow-md">
+                                <i class="fa-solid fa-heart-pulse mr-1"></i> Kokotoa BMI na Hifadhi Vipimo vya Vitals
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Input ya soga kwa Millen -->
+                    <div class="flex gap-2">
+                        <input type="text" id="query_nurse" placeholder="Andika ujumbe kwa Nesi Millen..." class="flex-1 bg-slate-900/80 text-sm p-3 rounded-xl border border-gray-800 focus:border-teal-500 focus:outline-none text-white" onkeydown="handleEnter(event, 'nurse')">
+                        <button onclick="askAgent('nurse')" class="w-12 h-12 rounded-xl bg-teal-600 text-slate-950 flex items-center justify-center hover:scale-105 transition">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+
+                    <div id="nav_to_doctor" class="hidden mt-4 text-center">
+                        <button onclick="advanceStage('doctor')" class="bg-gradient-to-r from-indigo-500 to-blue-600 hover:opacity-90 text-white font-extrabold text-xs px-6 py-3 rounded-xl transition inline-flex items-center gap-2 shadow-lg shadow-indigo-500/20">
+                            Ingia Chumba cha Daktari Michael <i class="fa-solid fa-user-doctor animate-pulse"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. DAKTARI: CHUMBA CHA DR. MICHAEL J. KAVISHE -->
+                <div id="room_doctor" class="room-container hidden glass-card rounded-2xl p-6 shadow-2xl relative overflow-hidden transition-all duration-300 border-t-4 border-indigo-500">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-800 pb-4 mb-4">
+                        <div class="flex items-center gap-3">
+                            <!-- Avatar Michael yenye uwezo wa kupakiwa picha -->
+                            <div class="w-16 h-16 rounded-full border-2 border-indigo-500 flex items-center justify-center bg-indigo-950/40 text-indigo-400 text-3xl relative overflow-hidden group">
+                                <img id="avatar_img_doctor" src="https://placehold.co/150x150/1e1b4b/ffffff?text=Doctor" class="w-full h-full object-cover hidden">
+                                <i id="avatar_icon_doctor" class="fa-solid fa-user-doctor"></i>
+                                <label class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition">
+                                    <i class="fa-solid fa-camera text-xs text-white"></i>
+                                    <input type="file" accept="image/*" class="hidden" onchange="uploadStaffAvatar('doctor', event)">
+                                </label>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white flex items-center gap-1.5">
+                                    Doctor Michael J. Kavishe <span class="text-[10px] px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 font-bold">Daktari Bingwa</span>
+                                </h3>
+                                <p class="text-xs text-indigo-400">Diagnosis, Uchunguzi, na Cheti cha Dawa</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-500 font-bold">HATUA 3 KATI YA 4</span>
+                    </div>
+
+                    <!-- Chat Box ya Michael -->
+                    <div id="chat_doctor" class="h-64 overflow-y-auto mb-4 p-3 bg-slate-950/50 rounded-xl space-y-4">
+                        <div class="flex gap-2.5 text-xs sm:text-sm">
+                            <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">D</div>
+                            <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl border border-indigo-500/10 text-gray-200">
+                                Jambo! Naitwa <strong>Doctor Michael J. Kavishe</strong>. 
+                                Nimezipitia taarifa zako zote na niko tayari kukusaidia. 
+                                Eleza kwa kina nini kinakusumbua, na kama una **picha ya mgonjwa au ripoti ya maabara (Lab Report / X-ray)**, tafadhali pakia hapa chini ili nianze uchunguzi.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview ya picha iliyopakiwa kwa Doctor -->
+                    <div id="docImagePreviewContainer" class="hidden flex items-center gap-3 p-2 bg-slate-900 rounded-xl border border-indigo-500/30 mb-3">
+                        <img id="docImagePreview" src="" class="h-16 w-16 object-cover rounded-lg border border-gray-800">
+                        <div class="text-xs text-gray-400 flex-1">
+                            Picha ya vipimo imepakiwa na kuwa tayari kumtumia Doctor Michael.
+                        </div>
+                        <button onclick="cancelDocImage()" class="text-red-400 hover:text-red-300 p-2"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <!-- Input ya soga kwa Michael -->
+                    <div class="flex items-end gap-2">
+                        <div class="relative shrink-0">
+                            <input type="file" id="docImageInput" accept="image/*" class="hidden" onchange="previewDocImage(event)">
+                            <button onclick="document.getElementById('docImageInput').click()" class="w-12 h-12 rounded-xl bg-slate-900 border border-gray-800 hover:bg-slate-800 text-gray-300 flex items-center justify-center transition" title="Pakia Picha ya Uchunguzi">
+                                <i class="fa-solid fa-camera text-lg"></i>
+                            </button>
+                        </div>
+                        <div class="flex-1">
+                            <input type="text" id="query_doctor" placeholder="Andika malalamiko yako au maswali hapa kwa daktari..." class="w-full bg-slate-900/80 text-sm p-3.5 rounded-xl border border-gray-800 focus:border-indigo-500 focus:outline-none text-white" onkeydown="handleEnter(event, 'doctor')">
+                        </div>
+                        <button onclick="askAgent('doctor')" class="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center hover:scale-105 transition">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+
+                    <div id="nav_to_advisor" class="hidden mt-4 text-center">
+                        <button onclick="advanceStage('advisor')" class="bg-gradient-to-r from-emerald-500 to-green-600 hover:opacity-90 text-slate-950 font-extrabold text-xs px-6 py-3 rounded-xl transition inline-flex items-center gap-2 shadow-lg shadow-emerald-500/20">
+                            Pata Ushauri kwa Ethan <i class="fa-solid fa-apple-whole animate-pulse"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4. MSHAURI: CHUMBA CHA ETHAN M. KAVISHE -->
+                <div id="room_advisor" class="room-container hidden glass-card rounded-2xl p-6 shadow-2xl relative overflow-hidden transition-all duration-300 border-t-4 border-emerald-500">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-800 pb-4 mb-4">
+                        <div class="flex items-center gap-3">
+                            <!-- Avatar Ethan yenye uwezo wa kupakiwa picha -->
+                            <div class="w-16 h-16 rounded-full border-2 border-emerald-500 flex items-center justify-center bg-emerald-950/40 text-emerald-400 text-3xl relative overflow-hidden group">
+                                <img id="avatar_img_advisor" src="https://placehold.co/150x150/065f46/ffffff?text=Ethan" class="w-full h-full object-cover hidden">
+                                <i id="avatar_icon_advisor" class="fa-solid fa-apple-whole"></i>
+                                <label class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition">
+                                    <i class="fa-solid fa-camera text-xs text-white"></i>
+                                    <input type="file" accept="image/*" class="hidden" onchange="uploadStaffAvatar('advisor', event)">
+                                </label>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white flex items-center gap-1.5">
+                                    Ethan M. Kavishe <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-bold">Mshauri</span>
+                                </h3>
+                                <p class="text-xs text-emerald-400">Lishe, Saikolojia, na Mazoezi Mepesi</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-500 font-bold">HATUA 4 KATI YA 4</span>
+                    </div>
+
+                    <!-- Chat Box ya Ethan -->
+                    <div id="chat_advisor" class="h-64 overflow-y-auto mb-4 p-3 bg-slate-950/50 rounded-xl space-y-4">
+                        <div class="flex gap-2.5 text-xs sm:text-sm">
+                            <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">E</div>
+                            <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl border border-emerald-500/10 text-gray-200">
+                                Habari yako! Mimi ni <strong>Ethan M. Kavishe</strong>, mshauri wako wa maisha na lishe. 
+                                Doctor Michael akimaliza utambuzi, nitakupa ushauri wa tiba mbadala, lishe ya asili unayopaswa kula, na mtindo wa maisha utakaokuharakishia uponyaji.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input ya soga kwa Ethan -->
+                    <div class="flex gap-2">
+                        <input type="text" id="query_advisor" placeholder="Andika ujumbe au swali kwa Ethan hapa..." class="flex-1 bg-slate-900/80 text-sm p-3.5 rounded-xl border border-gray-800 focus:border-emerald-500 focus:outline-none text-white" onkeydown="handleEnter(event, 'advisor')">
+                        <button onclick="askAgent('advisor')" class="w-12 h-12 rounded-xl bg-emerald-600 text-slate-950 flex items-center justify-center hover:scale-105 transition">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+
+                    <!-- Kitufe cha kumaliza matibabu na kuhifadhi file -->
+                    <div class="mt-5 flex flex-col sm:flex-row gap-2 justify-center">
+                        <button onclick="savePatientToArchives()" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 text-white font-extrabold text-xs px-6 py-3 rounded-xl transition inline-flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
+                            <i class="fa-solid fa-folder-plus"></i> Hifadhi Kwenye Kumbukumbu & Fungua Faili Jipya
+                        </button>
+                        <button onclick="resetClinic()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-3 rounded-xl transition">
+                            <i class="fa-solid fa-rotate-left"></i> Anza Upya Tu
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- UPANDE WA KULIA: KADI YA MGONJWA NA JALADA LA KUMBUKUMBU (Col: 4) -->
+            <div class="lg:col-span-4 space-y-6">
+                
+                <!-- TABS ZA UPANDE WA KULIA -->
+                <div class="flex gap-1 bg-slate-950 p-1.5 rounded-xl border border-gray-800">
+                    <button onclick="switchRightTab('card')" id="btn_tab_card" class="flex-1 py-2 text-xs font-bold rounded-lg text-cyan-400 bg-slate-900 transition">
+                        Kadi ya Sasa
+                    </button>
+                    <button onclick="switchRightTab('archives')" id="btn_tab_archives" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition flex items-center justify-center gap-1">
+                        Kumbukumbu <span id="archive_count" class="bg-slate-800 text-gray-300 text-[9px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+                    </button>
+                </div>
+
+                <!-- TUKIO 1: KADI YA MGONJWA YA SASA -->
+                <div id="right_tab_card" class="right-tab-content glass-card rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
+                    <div class="flex items-center gap-2 border-b border-gray-800 pb-3">
+                        <i class="fa-solid fa-address-card text-cyan-400 text-lg"></i>
+                        <div>
+                            <h3 class="font-black text-xs text-white uppercase tracking-wider">Kadi ya Mgonjwa (Active Card)</h3>
+                            <p class="text-[10px] text-gray-400">Inajaa kiotomatiki wakati huduma ikiendelea</p>
+                        </div>
+                    </div>
+
+                    <!-- Taarifa za msingi -->
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between py-1 border-b border-slate-900">
+                            <span class="text-gray-450">Jina:</span>
+                            <span id="card_name" class="font-bold text-white">-</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b border-slate-900">
+                            <span class="text-gray-450">Umri:</span>
+                            <span id="card_age" class="font-bold text-white">-</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b border-slate-900">
+                            <span class="text-gray-450">Jinsia:</span>
+                            <span id="card_gender" class="font-bold text-white">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Vipimo (Vitals) -->
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-900 space-y-2 text-xs">
+                        <h4 class="text-[10px] font-bold text-cyan-400 tracking-wider">VIPIMO VYA VITALS</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="p-2 bg-slate-900/60 rounded border border-gray-800">
+                                <span class="text-[9px] text-gray-500 block">Uzito</span>
+                                <strong id="card_weight" class="text-white text-xs">-</strong>
+                            </div>
+                            <div class="p-2 bg-slate-900/60 rounded border border-gray-800">
+                                <span class="text-[9px] text-gray-500 block">Urefu</span>
+                                <strong id="card_height" class="text-white text-xs">-</strong>
+                            </div>
+                            <div class="p-2 bg-slate-900/60 rounded border border-gray-800">
+                                <span class="text-[9px] text-gray-500 block">Presha (BP)</span>
+                                <strong id="card_bp" class="text-white text-xs">-</strong>
+                            </div>
+                            <div class="p-2 bg-slate-900/60 rounded border border-gray-800">
+                                <span class="text-[9px] text-gray-500 block">Sukari</span>
+                                <strong id="card_sugar" class="text-white text-xs">-</strong>
+                            </div>
+                        </div>
+                        <div class="pt-2 flex justify-between items-center border-t border-slate-900 text-[11px]">
+                            <span class="text-gray-400">BMI:</span>
+                            <span id="card_bmi" class="font-extrabold px-2 py-0.5 rounded text-[10px] bg-slate-900 text-gray-300">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Matibabu kutoka kwa Dr & Ethan -->
+                    <div class="space-y-3 text-xs">
+                        <div>
+                            <h4 class="text-[10px] font-bold text-indigo-400 tracking-wider mb-1">UTAMBUZI (DIAGNOSIS)</h4>
+                            <div id="card_diagnosis" class="p-3 bg-slate-950 rounded-xl border border-slate-900 italic text-gray-400 text-[11px] leading-relaxed">
+                                Doctor Michael bado hajaweka utambuzi...
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-[10px] font-bold text-indigo-400 tracking-wider mb-1">CHETI CHA DAWA (PRESCRIPTION)</h4>
+                            <div id="card_prescription" class="p-3 bg-slate-950 rounded-xl border border-slate-900 text-gray-400 text-[11px] leading-relaxed">
+                                Hakuna dawa zilizoandikwa bado...
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-[10px] font-bold text-emerald-400 tracking-wider mb-1">LISHE & USHAURI</h4>
+                            <div id="card_diet" class="p-3 bg-slate-950 rounded-xl border border-slate-900 text-gray-400 text-[11px] leading-relaxed">
+                                Ethan bado hajatoa ushauri...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TUKIO 2: JALADA LA KUMBUKUMBU (ARCHIVES) -->
+                <div id="right_tab_archives" class="right-tab-content hidden glass-card rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-folder-open text-yellow-500 text-lg"></i>
+                            <div>
+                                <h3 class="font-black text-xs text-white uppercase tracking-wider">Maktaba ya Matibabu</h3>
+                                <p class="text-[10px] text-gray-400">Faili zote za wagonjwa waliopita</p>
+                            </div>
+                        </div>
+                        <button onclick="clearAllArchives()" class="text-[10px] text-red-400 hover:text-red-300 font-bold">
+                            <i class="fa-solid fa-trash-can mr-0.5"></i> Futa Zote
+                        </button>
+                    </div>
+
+                    <!-- Orodha ya archives -->
+                    <div id="archives_list" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                        <!-- Zitaingia hapa kwa JS -->
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- TOAST NOTIFICATION SYSTEM -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition duration-300 max-w-sm glass-card p-4 rounded-xl flex items-center gap-3 border-l-4 border-cyan-500">
+        <div id="toastIcon" class="text-cyan-400 text-lg"><i class="fa-solid fa-circle-check"></i></div>
+        <div id="toastMessage" class="text-xs font-semibold text-gray-200">Taarifa imefika!</div>
+    </div>
+
+    <script>
+        // HOUSING YA STATE YA APPS
+        let patientCard = {
+            name: "",
+            age: "",
+            gender: "",
+            weight: "",
+            height: "",
+            bp: "",
+            sugar: "",
+            bmi: "",
+            diagnosis: "",
+            prescription: "",
+            diet: "",
+            date: "",
+            isEmergency: false
+        };
+
+        // Archives za wagonjwa waliopita (Medical Archives)
+        let medicalArchives = JSON.parse(localStorage.getItem('kavishe_archives')) || [];
+        
+        // Picha za wauguzi (Base64)
+        let staffAvatars = JSON.parse(localStorage.getItem('kavishe_staff_avatars')) || {
+            reception: "",
+            nurse: "",
+            doctor: "",
+            advisor: ""
+        };
+
+        let currentStage = "reception";
+        let docImageBase64 = ""; // Picha ya vipimo kwa doctor
+
+        // Pakia app pindi ikifunguka
+        window.onload = function() {
+            const savedKey = localStorage.getItem('kavishe_clinic_key');
+            if (savedKey) {
+                document.getElementById('apiKeyInput').value = savedKey;
+            }
+            loadStaffAvatars();
+            renderArchives();
+        };
+
+        // KUTUNZA API KEY SALAMA
+        function saveApiKey() {
+            const val = document.getElementById('apiKeyInput').value.trim();
+            localStorage.setItem('kavishe_clinic_key', val);
+            showToast("API Key imehifadhiwa salama kwenye simu yako!", "key", "cyan");
+        }
+
+        // KUSHUGHULIKIA KUPAKIA PICHA ZA WAUGUZI (AVATARS)
+        function uploadStaffAvatar(role, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                staffAvatars[role] = base64;
+                localStorage.setItem('kavishe_staff_avatars', JSON.stringify(staffAvatars));
+                
+                // Sasisha muonekano
+                const img = document.getElementById(`avatar_img_${role}`);
+                const icon = document.getElementById(`avatar_icon_${role}`);
+                img.src = base64;
+                img.classList.remove('hidden');
+                icon.classList.add('hidden');
+                
+                showToast(`Picha ya ${role.toUpperCase()} imepakiwa na kuhifadhiwa!`, "camera", "cyan");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // KUPAKIA AVATARS ZILIZOHIFADHIWA
+        function loadStaffAvatars() {
+            const roles = ['reception', 'nurse', 'doctor', 'advisor'];
+            roles.forEach(role => {
+                if (staffAvatars[role]) {
+                    const img = document.getElementById(`avatar_img_${role}`);
+                    const icon = document.getElementById(`avatar_icon_${role}`);
+                    img.src = staffAvatars[role];
+                    img.classList.remove('hidden');
+                    icon.classList.add('hidden');
+                }
+            });
+        }
+
+        // KUBADILISHA VYUMBA/STAGES ZA MATIBABU
+        function advanceStage(stageId) {
+            currentStage = stageId;
+            
+            // Ficha vyumba vyote
+            document.querySelectorAll('.room-container').forEach(r => {
+                r.classList.add('hidden');
+            });
+
+            // Onyesha chumba kilichochaguliwa
+            document.getElementById('room_' + stageId).classList.remove('hidden');
+            
+            showToast(`Sasa umeingia Chumba cha ${stageId.toUpperCase()}!`, "hospital-user", "cyan");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // KUBADILISHA TABS ZA KULIA (KADI VS ARCHIVES)
+        function switchRightTab(tabId) {
+            document.querySelectorAll('.right-tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById('right_tab_' + tabId).classList.remove('hidden');
+
+            document.getElementById('btn_tab_card').className = tabId === 'card' 
+                ? 'flex-1 py-2 text-xs font-bold rounded-lg text-cyan-400 bg-slate-900 transition' 
+                : 'flex-1 py-2 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition';
+
+            document.getElementById('btn_tab_archives').className = tabId === 'archives' 
+                ? 'flex-1 py-2 text-xs font-bold rounded-lg text-cyan-400 bg-slate-900 transition flex items-center justify-center gap-1' 
+                : 'flex-1 py-2 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition flex items-center justify-center gap-1';
+        }
+
+        // 1. MAPOKEZI: USAJILI WA HARAKA
+        function registerPatient() {
+            const name = document.getElementById('p_name').value.trim();
+            const age = document.getElementById('p_age').value.trim();
+            const gender = document.getElementById('p_gender').value;
+
+            if (!name || !age || !gender) {
+                return showToast("Tafadhali jaza Jina, Umri na Jinsia kukamilisha usajili!", "exclamation-triangle", "red");
+            }
+
+            patientCard.name = name;
+            patientCard.age = age;
+            patientCard.gender = gender;
+            patientCard.date = new Date().toLocaleString('sw-TZ');
+
+            // Sasisha kadi ya kulia
+            document.getElementById('card_name').innerText = name;
+            document.getElementById('card_age').innerText = age + " Miaka";
+            document.getElementById('card_gender').innerText = gender;
+
+            showToast("Kadi ya mgonjwa imefunguliwa rasmi!", "id-card", "cyan");
+
+            addMessageToChat('reception', 'user', `Nimefika hospitali kufungua jalada. Jina: ${name}, Umri: ${age} miaka, Jinsia: ${gender}.`);
+            sendToGemini('reception', `Mgonjwa amejisajili. Jina lake ni ${name}, miaka ${age}, na jinsia ya ${gender}. Msalimie kwa jina lake na kwa heshima, mkaribishe Kavishe Health Center, mthibitishie kuwa kadi yake imefunguliwa na mwelekeze kubonyeza kitufe cha 'Nenda kwa Nesi Millen' kilichopo chini.`);
+            
+            document.getElementById('nav_to_nurse').classList.remove('hidden');
+        }
+
+        // 2. NESI: KOKOTOA VITALS
+        function calculateVitals() {
+            const w = parseFloat(document.getElementById('p_weight').value);
+            const h = parseFloat(document.getElementById('p_height').value);
+            const bp = document.getElementById('p_bp').value.trim();
+            const sugar = document.getElementById('p_sugar').value.trim();
+
+            if (!w || !h || !bp || !sugar) {
+                return showToast("Tafadhali jaza vipimo vyote vya Nesi!", "triangle-exclamation", "red");
+            }
+
+            patientCard.weight = w + " Kg";
+            patientCard.height = h + " cm";
+            patientCard.bp = bp;
+            patientCard.sugar = sugar + " mg/dL";
+
+            // Kokotoa BMI
+            const heightInMeters = h / 100;
+            const bmi = (w / (heightInMeters * heightInMeters)).toFixed(1);
+            let status = "";
+            if (bmi < 18.5) status = "Uzito Mdogo";
+            else if (bmi < 25) status = "Uzito wa Kawaida";
+            else if (bmi < 30) status = "Uzito Mkubwa";
+            else status = "Uzito Uliopitiliza (Obese)";
+
+            patientCard.bmi = `${bmi} (${status})`;
+
+            // Sasisha Kadi ya kulia
+            document.getElementById('card_weight').innerText = w + " Kg";
+            document.getElementById('card_height').innerText = h + " cm";
+            document.getElementById('card_bp').innerText = bp;
+            document.getElementById('card_sugar').innerText = sugar + " mg/dL";
+            
+            const bmiBadge = document.getElementById('card_bmi');
+            bmiBadge.innerText = `${bmi} (${status})`;
+            if (status === "Uzito wa Kawaida") {
+                bmiBadge.className = "font-extrabold px-2 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400";
+            } else {
+                bmiBadge.className = "font-extrabold px-2 py-0.5 rounded text-[10px] bg-red-950 text-red-400";
+            }
+
+            showToast("Vipimo vya Vitals na BMI vimehifadhiwa!", "heart-circle-check", "cyan");
+
+            addMessageToChat('nurse', 'user', `Nesi, hapa kuna vipimo vyangu: Uzito ${w}Kg, Urefu ${h}cm, BP ${bp}, Sukari ${sugar}mg/dL. BMI yangu ni ${bmi} (${status}).`);
+            sendToGemini('nurse', `Mgonjwa ameweka vipimo: Uzito ${w}Kg, Urefu ${h}cm, BP ${bp}, Sukari ${sugar}mg/dL. BMI ni ${bmi} (${status}). Mueleze maana ya vipimo hivi kitaalamu, mpe moyo, na mkaribishe kwenda kwa Doctor Michael kwa kubonyeza kitufe chini.`);
+
+            document.getElementById('nav_to_doctor').classList.remove('hidden');
+        }
+
+        // DHARURA: DIRECT BYPASS KWA DOCTOR
+        function triggerEmergency() {
+            patientCard.isEmergency = true;
+            patientCard.name = "MGONJWA WA DHARURA 🚨";
+            patientCard.age = "Haikujulikana";
+            patientCard.gender = "Haikujulikana";
+            patientCard.date = new Date().toLocaleString('sw-TZ');
+            patientCard.diagnosis = "DHARURA KUBWA IMELETWA!";
+            
+            document.getElementById('card_name').innerText = "MGONJWA WA DHARURA 🚨";
+            document.getElementById('card_age').innerText = "Inasubiri...";
+            document.getElementById('card_gender').innerText = "Inasubiri...";
+            document.getElementById('card_diagnosis').innerText = "Uchunguzi wa dharura wa haraka sana unaendelea...";
+
+            advanceStage('doctor');
+            showToast("Mgonjwa ameingizwa chumba cha dharura kwa Daktari!", "triangle-exclamation", "red");
+
+            addMessageToChat('doctor', 'user', `🚨 DHARURA! Mgonjwa amefikishwa chumba cha matibabu ya haraka bila kupitia hatua za awali.`);
+            sendToGemini('doctor', `DHARURA YA HARAKA IMEJITOKEZA! Mgonjwa amefikishwa chumba chako moja kwa moja kwa dharura kubwa. Mapokezi na Nesi wamerukwa. Muulize nini kinamsumbua kwa haraka na kwa Kiswahili kinachotuliza hofu.`);
+        }
+
+        // PREVIEW NA CANCEL YA PICHA KWA DOCTOR
+        function previewDocImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                docImageBase64 = e.target.result.split(',')[1];
+                document.getElementById('docImagePreview').src = e.target.result;
+                document.getElementById('docImagePreviewContainer').classList.remove('hidden');
+                showToast("Picha ya vipimo imepakiwa tayari!", "camera", "cyan");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cancelDocImage() {
+            docImageBase64 = "";
+            document.getElementById('docImageInput').value = "";
+            document.getElementById('docImagePreviewContainer').classList.add('hidden');
+        }
+
+        // KUSHUGHULIKIA ENTO YA KEYBOARD
+        function handleEnter(event, stage) {
+            if (event.key === 'Enter') {
+                askAgent(stage);
+            }
+        }
+
+        // KUSHIKILIA SOGA YA MTUMIAJI
+        async function askAgent(stage) {
+            const queryInput = document.getElementById('query_' + stage);
+            const query = queryInput.value.trim();
+            if (!query && !docImageBase64) return;
+
+            let imgTag = "";
+            if (stage === 'doctor' && docImageBase64) {
+                imgTag = `<br><img src="${document.getElementById('docImagePreview').src}" class="max-h-28 rounded-lg mt-2 border border-indigo-500/30">`;
+            }
+
+            addMessageToChat(stage, 'user', query ? query + imgTag : "Umetuma picha ya vipimo..." + imgTag);
+            queryInput.value = '';
+
+            await sendToGemini(stage, query);
+        }
+
+        // ONYESHA CHAT BOX
+        function addMessageToChat(stage, sender, text) {
+            const box = document.getElementById('chat_' + stage);
+            const isUser = sender === 'user';
+            const initials = stage === 'reception' ? 'M' : stage === 'nurse' ? 'N' : stage === 'doctor' ? 'D' : 'E';
+            const colorClass = stage === 'reception' ? 'purple' : stage === 'nurse' ? 'teal' : stage === 'doctor' ? 'indigo' : 'emerald';
+
+            if (isUser) {
+                box.innerHTML += `
+                    <div class="flex gap-2.5 justify-end text-xs sm:text-sm">
+                        <div class="bg-slate-800 text-gray-200 p-3 rounded-l-xl rounded-br-xl text-right max-w-[85%] border border-slate-700">
+                            <b>Wewe:</b> ${text}
+                        </div>
+                    </div>
+                `;
+            } else {
+                box.innerHTML += `
+                    <div class="flex gap-2.5 text-xs sm:text-sm">
+                        <div class="w-8 h-8 rounded-full bg-${colorClass}-500/20 text-${colorClass}-400 flex items-center justify-center shrink-0 font-bold">${initials}</div>
+                        <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl border border-${colorClass}-500/10 text-gray-200 max-w-[85%]">
+                            <b>${stage.toUpperCase()}:</b> ${text}
+                        </div>
+                    </div>
+                `;
+            }
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // KUWASILIANA NA GEMINI API
+        async function sendToGemini(stage, userQuery) {
+            const apiKey = localStorage.getItem('kavishe_clinic_key');
+            if (!apiKey) {
+                showToast("Tafadhali jaza Gemini API Key yako juu ili hospitali ianze kazi!", "triangle-exclamation", "red");
+                return;
+            }
+
+            const chatBox = document.getElementById('chat_' + stage);
+            const loadingId = "loading_" + Date.now();
+            const textHolderId = "reply_" + Date.now();
+
+            chatBox.innerHTML += `
+                <div class="flex gap-2.5 text-xs sm:text-sm" id="${loadingId}">
+                    <div class="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0"><i class="fa-solid fa-spinner animate-spin"></i></div>
+                    <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl text-gray-400">
+                        Hospitali inasoma maelezo ya mgonjwa...
+                    </div>
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // System instructions
+            let systemContext = "";
+            if (stage === 'reception') {
+                systemContext = `Wewe ni Mery P. Macha, mhudumu wa mapokezi makini na rafiki sana katika Kavishe Health Center. Kazi yako ni kumpokea mgonjwa, kusajili jina, umri na jinsia. Jibu kwa Kiswahili chenye kutuliza wasiwasi wa wagonjwa.`;
+            } else if (stage === 'nurse') {
+                systemContext = `Wewe ni Nesi Millen M. Kavishe. Kazi yako ni kuchambua uzito, urefu, presha na sukari ya mgonjwa katika Kavishe Health Center na kumweleza maana ya BMI yake kwa lugha ya Kiswahili rahisi na yenye kutia matumaini.`;
+            } else if (stage === 'doctor') {
+                systemContext = `Wewe ni Doctor Michael J. Kavishe, daktari bingwa mkuu wa Kavishe Health Center. Kazi yako ni kufanya uchunguzi wa dalili na picha za ripoti za vipimo, kutoa Utambuzi (Diagnosis) na kuandika Cheti cha Dawa (Prescription).
+                MUHIMU: Mwishoni mwa jibu lako la kwanza la diagnosis, andika kwa muundo huu ili kadi ya mgonjwa isome kiotomatiki:
+                [DIAGNOSIS]: {andika ugonjwa hapa}
+                [PRESCRIPTION]: {andika dawa na ratiba hapa}
+                `;
+            } else {
+                systemContext = `Wewe ni Ethan M. Kavishe, mshauri bingwa wa lishe na tiba mbadala wa Kavishe Health Center. Kazi yako ni kutoa ushauri wa kisaikolojia, lishe sahihi ya vyakula vya asili, na mazoezi mepesi yanayoendana na ugonjwa aliogunduliwa nao mgonjwa na Dr. Michael.
+                MUHIMU: Andika mwishoni kwa muundo huu ili kadi isome:
+                [DIET]: {andika chakula na mazoezi hapa}
+                `;
+            }
+
+            // INJECTING MEMORY: Faili zote za zamani za matibabu zinapachikwa hapa kama muktadha (Context)
+            const memoryContext = `
+            KUMBUKUMBU ZA MATIBABU YA ZAMANI (HISTORIA YA HOSPITALI):
+            ${JSON.stringify(medicalArchives)}
+            
+            KADI YA MGONJWA WA SASA HIVI:
+            ${JSON.stringify(patientCard)}
+            
+            Kama mtumiaji akiuliza habari za zamani, kama vile "Ugonjwa wa mwanzo", "Dawa za yule mgonjwa wa vidonda vya tumbo", au maelezo yoyote yaliyopo kwenye Kumbukumbu za Zamani, wasomee data hizo kutoka kwenye Kumbukumbu za Zamani hapo juu na uwajibu kwa usahihi kwa Kiswahili!
+            `;
+
+            let contents = [];
+            let parts = [];
+
+            if (stage === 'doctor' && docImageBase64) {
+                parts.push({
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: docImageBase64
+                    }
+                });
+                cancelDocImage(); // Safisha preview baada ya kuingiza
+            }
+
+            parts.push({
+                text: `${systemContext}\n\n${memoryContext}\n\nUjumbe wa mgonjwa kwa sasa: "${userQuery || "Nisomee picha niliyokupa"}"`
+            });
+
+            contents.push({ parts: parts });
+
+            try {
+                // Tunaita model ya Gemini 2.5 Flash
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: contents })
+                });
+
+                const data = await res.json();
+                document.getElementById(loadingId).remove();
+
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    const replyText = data.candidates[0].content.parts[0].text;
+
+                    chatBox.innerHTML += `
+                        <div class="flex gap-2.5 text-xs sm:text-sm">
+                            <div class="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 font-bold">${stage === 'reception' ? 'M' : stage === 'nurse' ? 'N' : stage === 'doctor' ? 'D' : 'E'}</div>
+                            <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl border border-slate-800 text-gray-200 max-w-[85%]">
+                                <span id="${textHolderId}"></span>
+                            </div>
+                        </div>
+                    `;
+
+                    let cleanedText = replyText;
+
+                    // Kutoa data kwenye kadi ya mgonjwa kwa ajili ya Doctor
+                    if (stage === 'doctor') {
+                        const diagMatch = replyText.match(/\[DIAGNOSIS\]:\s*(.*?)(?=\n|\[|$)/);
+                        const prescMatch = replyText.match(/\[PRESCRIPTION\]:\s*(.*?)(?=\n|\[|$)/);
+
+                        if (diagMatch && diagMatch[1]) {
+                            patientCard.diagnosis = diagMatch[1].trim();
+                            document.getElementById('card_diagnosis').innerText = patientCard.diagnosis;
+                            cleanedText = cleanedText.replace(/\[DIAGNOSIS\]:.*?(\n|$)/g, '');
+                        }
+                        if (prescMatch && prescMatch[1]) {
+                            patientCard.prescription = prescMatch[1].trim();
+                            document.getElementById('card_prescription').innerText = patientCard.prescription;
+                            cleanedText = cleanedText.replace(/\[PRESCRIPTION\]:.*?(\n|$)/g, '');
+                        }
+                        document.getElementById('nav_to_advisor').classList.remove('hidden');
+                    }
+
+                    // Kutoa data kwa ajili ya Ethan (Mshauri)
+                    if (stage === 'advisor') {
+                        const dietMatch = replyText.match(/\[DIET\]:\s*(.*?)(?=\n|\[|$)/);
+                        if (dietMatch && dietMatch[1]) {
+                            patientCard.diet = dietMatch[1].trim();
+                            document.getElementById('card_diet').innerText = patientCard.diet;
+                            cleanedText = cleanedText.replace(/\[DIET\]:.*?(\n|$)/g, '');
+                        }
+                    }
+
+                    // TYPEWRITER EFFECT
+                    runTypewriter(cleanedText, textHolderId, chatBox);
+
+                } else {
+                    throw new Error("Muingiliano wa API umekatika");
+                }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById(loadingId).innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center shrink-0"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl text-red-350">
+                        Kuna hitilafu ya mtandao au API Key haipo sahihi!
+                    </div>
+                `;
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // NYENDO ZA TYPEWRITER
+        function runTypewriter(text, elementId, chatBox) {
+            const el = document.getElementById(elementId);
+            let i = 0;
+            const speed = 8; // Kasi ya typewriter
+
+            const formatted = text
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+            function type() {
+                if (i < formatted.length) {
+                    if (formatted.charAt(i) === '<') {
+                        let tagEnd = formatted.indexOf('>', i);
+                        if (tagEnd !== -1) {
+                            el.innerHTML += formatted.substring(i, tagEnd + 1);
+                            i = tagEnd + 1;
+                        }
+                    } else {
+                        el.innerHTML += formatted.charAt(i);
+                        i++;
+                    }
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    setTimeout(type, speed);
+                }
+            }
+            type();
+        }
+
+        // KUHIFADHI MGONJWA KWENYE ARCHIVES (Electronic Records)
+        function savePatientToArchives() {
+            if (!patientCard.name) {
+                return showToast("Hakuna kadi iliyo hai ya kuhifadhi!", "exclamation-triangle", "red");
+            }
+
+            // Hifadhi kwenye orodha kuu ya hospitali
+            medicalArchives.push({ ...patientCard });
+            localStorage.setItem('kavishe_archives', JSON.stringify(medicalArchives));
+
+            showToast("Faili la mgonjwa limehifadhiwa kikamilifu kwenye Kumbukumbu za Hospitali!", "folder-open", "cyan");
+
+            renderArchives();
+            resetClinic();
+        }
+
+        // RENDER ORODHA YA ARCHIVES
+        function renderArchives() {
+            const list = document.getElementById('archives_list');
+            list.innerHTML = '';
+
+            document.getElementById('archive_count').innerText = medicalArchives.length;
+
+            if (medicalArchives.length === 0) {
+                list.innerHTML = `<p class="text-gray-500 text-xs text-center py-6">Hakuna kumbukumbu za zamani zilizohifadhiwa.</p>`;
+                return;
+            }
+
+            medicalArchives.slice().reverse().forEach((arc, idx) => {
+                const realIdx = medicalArchives.length - 1 - idx;
+                list.innerHTML += `
+                    <div class="p-3 bg-slate-900/80 rounded-xl border border-gray-800 text-xs space-y-2">
+                        <div class="flex justify-between items-start border-b border-gray-800 pb-1.5">
+                            <div>
+                                <h5 class="font-bold text-white">${arc.name}</h5>
+                                <p class="text-[9px] text-gray-500">${arc.date || 'Haikurekodiwa tarehe'}</p>
+                            </div>
+                            <span class="text-[9px] bg-indigo-950 text-indigo-300 px-1.5 py-0.5 rounded font-mono">${arc.age} Miaka</span>
+                        </div>
+                        <div class="text-[10px] space-y-1 text-gray-400">
+                            <p><strong>Ugonjwa (Diagnosis):</strong> ${arc.diagnosis || 'Hakuna utambuzi'}</p>
+                            <p><strong>Dawa:</strong> ${arc.prescription || 'Hakuna dawa zilizowekwa'}</p>
+                            <p><strong>Lishe & Ushauri:</strong> ${arc.diet || 'Hakuna ushauri'}</p>
+                        </div>
+                        <div class="text-right pt-1.5 border-t border-slate-900">
+                            <button onclick="deleteArchive(${realIdx})" class="text-[9px] text-red-400 hover:text-red-300">
+                                <i class="fa-solid fa-trash-can"></i> Futa faili
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // FUTA REKODI MOJA YA ARCHIVE
+        function deleteArchive(index) {
+            medicalArchives.splice(index, 1);
+            localStorage.setItem('kavishe_archives', JSON.stringify(medicalArchives));
+            renderArchives();
+            showToast("Faili la matibabu limefutwa!", "trash-can", "yellow");
+        }
+
+        // FUTA ARCHIVES ZOTE KABISA
+        function clearAllArchives() {
+            if (medicalArchives.length === 0) return;
+            medicalArchives = [];
+            localStorage.setItem('kavishe_archives', JSON.stringify(medicalArchives));
+            renderArchives();
+            showToast("Archives zote za hospitali zimesafishwa kabisa!", "fire", "red");
+        }
+
+        // TOAST NOTIFICATIONS
+        function showToast(message, icon, color) {
+            const toast = document.getElementById('toastNotification');
+            const tMsg = document.getElementById('toastMessage');
+            const tIcon = document.getElementById('toastIcon');
+
+            tMsg.innerText = message;
+            tIcon.innerHTML = `<i class="fa-solid fa-${icon}"></i>`;
+            
+            toast.className = `fixed bottom-5 right-5 z-50 transform transition duration-300 max-w-sm glass-card p-4 rounded-xl flex items-center gap-3 border-l-4 ${color === 'red' ? 'border-red-500' : color === 'yellow' ? 'border-yellow-500' : 'border-cyan-500'}`;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // ANZA UPYA CLINIC
+        function resetClinic() {
+            patientCard = {
+                name: "", age: "", gender: "", weight: "", height: "", bp: "", sugar: "", bmi: "", diagnosis: "", prescription: "", diet: "", date: "", isEmergency: false
+            };
+            document.getElementById('card_name').innerText = "-";
+            document.getElementById('card_age').innerText = "-";
+            document.getElementById('card_gender').innerText = "-";
+            document.getElementById('card_weight').innerText = "-";
+            document.getElementById('card_height').innerText = "-";
+            document.getElementById('card_bp').innerText = "-";
+            document.getElementById('card_sugar').innerText = "-";
+            document.getElementById('card_bmi').innerText = "-";
+            document.getElementById('card_diagnosis').innerText = "Doctor Michael bado hajaweka utambuzi...";
+            document.getElementById('card_prescription').innerText = "Hakuna dawa zilizoandikwa bado...";
+            document.getElementById('card_diet').innerText = "Ethan bado hajatoa ushauri...";
+
+            document.getElementById('p_name').value = '';
+            document.getElementById('p_age').value = '';
+            document.getElementById('p_gender').value = '';
+            document.getElementById('p_weight').value = '';
+            document.getElementById('p_height').value = '';
+            document.getElementById('p_bp').value = '';
+            document.getElementById('p_sugar').value = '';
+
+            document.getElementById('nav_to_nurse').classList.add('hidden');
+            document.getElementById('nav_to_doctor').classList.add('hidden');
+            document.getElementById('nav_to_advisor').classList.add('hidden');
+
+            document.getElementById('chat_reception').innerHTML = `
+                <div class="flex gap-2.5 text-xs sm:text-sm">
+                    <div class="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">M</div>
+                    <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl border border-purple-500/10 text-gray-200">
+                        Jambo! Naitwa Mery P. Macha, karibu sana Kavishe Health Center. Tafadhali nisaidie Jina lako kamili, Umri, na Jinsia ili nikufungulie Faili la kadi ya mgonjwa kwa ajili ya vipimo.
+                    </div>
+                </div>
+            `;
+            document.getElementById('chat_nurse').innerHTML = `
+                <div class="flex gap-2.5 text-xs sm:text-sm">
+                    <div class="w-8 h-8 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center shrink-0">N</div>
+                    <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl border border-teal-500/10 text-gray-200">
+                        Karibu sebuleni kwangu, naitwa Nesi Millen M. Kavishe. Nitaingiza vipimo vyako vya sasa vya uzito, urefu, presha na sukari ili niweke ripoti yako sawa kabla hujaingia kwa daktari wetu.
+                    </div>
+                </div>
+            `;
+            document.getElementById('chat_doctor').innerHTML = `
+                <div class="flex gap-2.5 text-xs sm:text-sm">
+                    <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">D</div>
+                    <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl border border-indigo-500/10 text-gray-200">
+                        Jambo! Naitwa Doctor Michael J. Kavishe. Nimezipitia taarifa zako zote na niko tayari kukusaidia. Eleza kwa kina nini kinakusumbua, na kama una picha ya vipimo, pakia hapa chini.
+                    </div>
+                </div>
+            `;
+            document.getElementById('chat_advisor').innerHTML = `
+                <div class="flex gap-2.5 text-xs sm:text-sm">
+                    <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">E</div>
+                    <div class="bg-slate-900/80 p-3 rounded-r-xl rounded-bl-xl border border-emerald-500/10 text-gray-200">
+                        Habari yako! Mimi ni Ethan M. Kavishe, mshauri wako wa maisha na lishe. Doctor Michael akimaliza utambuzi, nitakupa ushauri wa tiba mbadala, lishe ya asili unayopaswa kula, na mtindo wa maisha.
+                    </div>
+                </div>
+            `;
+
+            advanceStage('reception');
+            switchRightTab('card');
+            showToast("Hospitali imesafishwa kuanza upya na mgonjwa mwingine!", "rotate-left", "cyan");
+        }
+    </script>
+</body>
+</html>
